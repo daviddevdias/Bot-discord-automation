@@ -4,16 +4,12 @@ import traceback
 import discord
 from discord.ext import commands
 from discord import app_commands
-from comandos.comando_musica import ComandoMusica
-
-
-permissoes = discord.Intents.all()
-permissoes.message_content = True
-permissoes.members = True
+from config import TOKEN, PREFIX
 
 
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="/", intents=intents)
+intents.message_content = True
+bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 # FFMPEG Options
 FFMPEG_OPTIONS = {
@@ -32,9 +28,12 @@ async def on_ready():
 
 
 @bot.command()
+@commands.guild_only()
+@commands.has_permissions(manage_messages=True)
+@commands.bot_has_permissions(manage_messages=True)
 async def clean(ctx, amount: int):
-    if amount <= 0:
-        await ctx.send("Por favor, forneça um número de 1 a 1000.")
+    if not 1 <= amount <= 100:
+        await ctx.send("Por favor, forneça um número de 1 a 100.")
         return
 
     deleted = await ctx.channel.purge(limit=amount)
@@ -42,7 +41,9 @@ async def clean(ctx, amount: int):
 
 
 @bot.command()
+@commands.guild_only()
 @commands.has_permissions(kick_members=True)
+@commands.bot_has_permissions(kick_members=True)
 async def expulsar(ctx, member: discord.Member, *, reason=None):
     if not ctx.guild.me.guild_permissions.kick_members:
         await ctx.send("Não possui permissão para expulsar esse usúario!")
@@ -59,7 +60,9 @@ async def expulsar(ctx, member: discord.Member, *, reason=None):
 
 
 @bot.command()
+@commands.guild_only()
 @commands.has_permissions(ban_members=True)
+@commands.bot_has_permissions(ban_members=True)
 async def banir(ctx, member: discord.Member, *, reason=None):
     if not ctx.guild.me.guild_permissions.ban_members:
         await ctx.send("Eu não tenho permissão para banir membros!")
@@ -74,7 +77,13 @@ async def banir(ctx, member: discord.Member, *, reason=None):
 
 
 @bot.command()
+@commands.guild_only()
+@commands.has_permissions(mute_members=True)
+@commands.bot_has_permissions(mute_members=True)
 async def mute(ctx, member: discord.Member, time: int = 60):
+    if not 1 <= time <= 600:
+        await ctx.send("Informe um tempo entre 1 e 600 segundos.")
+        return
     if ctx.author.top_role <= member.top_role:
         await ctx.send("Você não tem permissão para mutar esse usuário.")
         return
@@ -86,10 +95,18 @@ async def mute(ctx, member: discord.Member, time: int = 60):
         await ctx.send(f"{member.mention} foi desmutado.")
     except Exception as e:
         await ctx.send(f"Ocorreu um erro: {e}")
-@bot.command() 
+@bot.command()
+@commands.guild_only()
+@commands.has_permissions(mute_members=True)
+@commands.bot_has_permissions(mute_members=True)
 async def unmute(ctx, member: discord.Member):
-    await member.editable(mute=False)
+    if ctx.author.top_role <= member.top_role:
+        await ctx.send("Você não tem permissão para desmutar esse usuário.")
+        return
+    await member.edit(mute=False)
     await ctx.send(f"{member.mention} foi desmutado.")    
     
 
-bot.run("MTMzNDQ2OTI5MTU5NjMyMDg1MQ.G7HNjb.mXuM6uwTK2Z6AE3QWJrzyuVkK7NM9NCNnTaaVQ")
+if not TOKEN:
+    raise SystemExit("Configure DISCORD_TOKEN antes de executar.")
+bot.run(TOKEN)

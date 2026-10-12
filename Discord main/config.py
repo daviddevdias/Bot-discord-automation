@@ -1,2 +1,5 @@
-TOKEN = "MTMzNDQ2OTI5MTU5NjMyMDg1MQ.G7HNjb.mXuM6uwTK2Z6AE3QWJrzyuVkK7NM9NCNnTaaVQ"
+import os
+
+TOKEN = os.environ.get("DISCORD_TOKEN", "")
 PREFIX = "/"
+
